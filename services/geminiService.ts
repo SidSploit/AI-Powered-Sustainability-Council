@@ -1,19 +1,28 @@
-
 import { GoogleGenAI } from "@google/genai";
 import { COUNCIL_SYSTEM_PROMPT } from "../constants";
-import { 
-  CouncilOutput, 
-  RisksAndOpportunitiesOutput, 
-  ImprovementOutput, 
-  SimpleExplanationOutput 
+import {
+  CouncilOutput,
+  RisksAndOpportunitiesOutput,
+  ImprovementOutput,
+  SimpleExplanationOutput,
 } from "../types";
 
-const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Vite exposes only env vars prefixed with VITE_ to the client. Use VITE_GEMINI_API_KEY in .env
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY ?? (typeof process !== "undefined" ? process.env?.API_KEY : undefined);
+
+const getAI = () => {
+  if (!apiKey?.trim()) {
+    throw new Error(
+      "Missing Gemini API key. Add VITE_GEMINI_API_KEY=your_key to your .env file and restart the dev server."
+    );
+  }
+  return new GoogleGenAI({ apiKey: apiKey.trim() });
+};
 
 export const runCouncilDebate = async (scenario: string, type: string): Promise<CouncilOutput> => {
   const ai = getAI();
   const response = await ai.models.generateContent({
-    model: 'gemini-3-pro-preview',
+    model: 'gemini-2.5-flash',
     contents: `Scenario Type: ${type}\nScenario: ${scenario}`,
     config: {
       systemInstruction: COUNCIL_SYSTEM_PROMPT,
@@ -34,7 +43,7 @@ export const runCouncilDebate = async (scenario: string, type: string): Promise<
 export const getRisksAndOpportunities = async (councilData: CouncilOutput): Promise<RisksAndOpportunitiesOutput> => {
   const ai = getAI();
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-2.5-flash',
     contents: `From this Sustainability Council JSON, extract:
 - TOP 3 RISKS with label, 1-2 sentence description, horizon (short-term/medium-term/long-term)
 - TOP 3 OPPORTUNITIES with label, 1-2 sentence description, horizon  
@@ -52,7 +61,7 @@ Council JSON: ${JSON.stringify(councilData)}`,
 export const getImprovementPlan = async (councilData: CouncilOutput): Promise<ImprovementOutput> => {
   const ai = getAI();
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-2.5-flash',
     contents: `Analyze this Sustainability Council JSON output and propose 3-7 concrete, actionable changes that would improve the Environmental, Social, and Governance/Economic performance of the recommended option. 
 For each recommendation, specify which CSR dimension(s) it primarily improves and note any potential trade-offs. 
 Output JSON: { intro: string, suggestions: [{text: string, dimensions: string[], trade_offs: string}] }
@@ -68,7 +77,7 @@ Council JSON: ${JSON.stringify(councilData)}`,
 export const getSimpleExplanation = async (councilData: CouncilOutput): Promise<SimpleExplanationOutput> => {
   const ai = getAI();
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-2.5-flash',
     contents: `Convert this Sustainability Council JSON into 3-4 short paragraphs of plain-language explanation for non-technical stakeholders. Cover the scenario, key CSR findings, options, and recommendation. Add one extra paragraph tailored for a specific role (mayor, campus officer, ESG manager) explaining what this means for them. Output plain text JSON format only.
 Output JSON: { explanation: string, role_based_summary: string }
 Council JSON: ${JSON.stringify(councilData)}`,
@@ -83,7 +92,7 @@ Council JSON: ${JSON.stringify(councilData)}`,
 export const getOnePageReport = async (councilData: CouncilOutput): Promise<string> => {
   const ai = getAI();
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-2.5-flash',
     contents: `Create a one-page CSR report from this Sustainability Council JSON. 
 Output PLAIN TEXT ONLY (no JSON, no markdown) with these EXACT sections and headings in order:
 
@@ -116,7 +125,7 @@ Council JSON: ${JSON.stringify(councilData)}`,
 export const getScenarioCoach = async (scenario: string): Promise<string[]> => {
   const ai = getAI();
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-2.5-flash',
     contents: `Review this scenario: "${scenario}". Suggest what might be missing to make it a better CSR proposal (max 3 items).`,
     config: {
       systemInstruction: "Output JSON: { suggestions: [string] }",
@@ -130,7 +139,7 @@ export const getScenarioCoach = async (scenario: string): Promise<string[]> => {
 export const chatWithAssistant = async (query: string, currentContext?: CouncilOutput): Promise<string> => {
   const ai = getAI();
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-2.5-flash',
     contents: `User Query: ${query}\nContext: ${JSON.stringify(currentContext || "None")}`,
     config: {
       systemInstruction: "You are the Council Assistant. Help users phrase scenarios, explain CSR concepts, and summarize findings. Be succinct.",

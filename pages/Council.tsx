@@ -76,7 +76,9 @@ const Council: React.FC<CouncilProps> = ({ user, onShowLogin }) => {
       setRisks(riskData);
       setIsRisksLoading(false);
     } catch (err) {
-      setError('The council hit a roadblock. Please try again.');
+      const message = err instanceof Error ? err.message : "The council hit a roadblock. Please try again.";
+      setError(message);
+      console.error("Council error:", err);
     } finally {
       setIsDebating(false);
     }
