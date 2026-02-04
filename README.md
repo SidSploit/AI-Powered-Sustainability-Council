@@ -20,5 +20,7 @@ View your app in AI Studio: https://ai.studio/apps/drive/18yEl1POIXvmaqIq2VLfNTW
    VITE_GEMINI_API_KEY=your_gemini_api_key_here
    ```
    (Vite only exposes variables prefixed with `VITE_` to the browser.)
+   
+   **Security note:** any `VITE_` key is bundled into the client and is **not secret**. For production, move Gemini calls to a backend/serverless function and keep the key server-side.
 3. Run the app:
    `npm run dev`
