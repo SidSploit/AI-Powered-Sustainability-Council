@@ -110,7 +110,7 @@ const Council: React.FC<CouncilProps> = ({ user, onShowLogin }) => {
       setSimpleExplanation(data);
       setActiveTab('tools');
     } finally {
-      setIsImproving(false);
+      setIsExplaining(false);
     }
   };
 
